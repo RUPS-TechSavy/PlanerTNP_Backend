@@ -1,4 +1,6 @@
 # routes/auth_routes.py
+from urllib.parse import unquote
+
 from flask import Blueprint, request, jsonify
 from endpoints.user_logic import login_user, register_user
 from endpoints.schedule_processor import process_csv_to_db
@@ -40,13 +42,20 @@ def upload_schedule():
 # Route to retrieve all subjects for a program
 @schedule_bp.route('/programs/<program_name>/subjects', methods=['GET'])
 def get_all_subjects(program_name):
-    subjects = retrieve_all_subjects(program_name)
+    # Decode the URL-encoded program name and replace + with spaces
+    decoded_program_name = unquote(program_name).replace('+', ' ')
+    print(decoded_program_name)
+    subjects = retrieve_all_subjects(decoded_program_name)
     return jsonify(subjects), 200
 
 
 # Route to retrieve schedule for a specific subject
 @schedule_bp.route('/programs/<program_name>/subjects/<subject_name>', methods=['GET'])
 def get_schedule(program_name, subject_name):
+    # Decode the URL-encoded program and subject names and replace + with spaces
+    decoded_program_name = unquote(program_name).replace('+', ' ')
+    decoded_subject_name = unquote(subject_name).replace('+', ' ')
+
     conditions = request.args.to_dict()
-    schedule = retrieve_schedule(program_name, subject_name, conditions)
+    schedule = retrieve_schedule(decoded_program_name, decoded_subject_name, conditions)
     return jsonify(schedule), 200
