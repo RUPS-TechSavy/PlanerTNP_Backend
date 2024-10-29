@@ -2,12 +2,15 @@
 from urllib.parse import unquote
 
 from flask import Blueprint, request, jsonify
-from endpoints.user_logic import login_user, register_user
+
+from endpoints.task_logic import set_task, get_all_tasks, delete_task
+from endpoints.user_logic import login_user, register_user, set_user_data, get_user_data, update_user_data, delete_user
 from endpoints.schedule_processor import process_csv_to_db
 from endpoints.schedule_retriever import retrieve_all_subjects, retrieve_schedule
 
 auth_bp = Blueprint('auth', __name__)
 schedule_bp = Blueprint('schedule', __name__)
+task_bp = Blueprint('tasks', __name__)
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -15,11 +18,40 @@ def login():
     user_data = request.json
     result, status_code = login_user(user_data)
     return jsonify(result), status_code
+
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     user_data = request.json
     result, status_code = register_user(user_data)
     return jsonify(result), status_code
+
+
+@auth_bp.route('/user/<user_id>/set-profile', methods=['PUT'])
+def set_profile(user_id):
+    profile_data = request.json
+    result, status_code = set_user_data(user_id, profile_data)
+    return jsonify(result), status_code
+
+
+@auth_bp.route('/user/<user_id>/get-profile', methods=['GET'])
+def get_profile(user_id):
+    result, status_code = get_user_data(user_id)
+    return jsonify(result), status_code
+
+
+@auth_bp.route('/user/<user_id>', methods=['DELETE'])
+def delete_profile(user_id):
+    result, status_code = delete_user(user_id)
+    return jsonify(result), status_code
+
+
+@auth_bp.route('/user/<user_id>/update-data', methods=['PUT'])
+def update_profile(user_id):
+    updated_data = request.json
+    result, status_code = update_user_data(user_id, updated_data)
+    return jsonify(result), status_code
+
 
 # Route for processing CSV and saving data to MongoDB
 @schedule_bp.route('/upload-schedule', methods=['POST'])
@@ -59,3 +91,25 @@ def get_schedule(program_name, subject_name):
     conditions = request.args.to_dict()
     schedule = retrieve_schedule(decoded_program_name, decoded_subject_name, conditions)
     return jsonify(schedule), 200
+
+
+# Route to add a new task
+@task_bp.route('/user/<user_id>/tasks', methods=['POST'])
+def add_task(user_id):
+    task_data = request.json
+    result, status_code = set_task(user_id, task_data)
+    return jsonify(result), status_code
+
+
+# Route to retrieve all tasks for a user
+@task_bp.route('/user/<user_id>/tasks', methods=['GET'])
+def retrieve_tasks(user_id):
+    result, status_code = get_all_tasks(user_id)
+    return jsonify(result), status_code
+
+
+# Route to delete a specific task
+@task_bp.route('/user/<user_id>/tasks/<task_id>', methods=['DELETE'])
+def remove_task(user_id, task_id):
+    result, status_code = delete_task(user_id, task_id)
+    return jsonify(result), status_code

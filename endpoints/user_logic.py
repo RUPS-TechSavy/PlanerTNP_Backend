@@ -37,3 +37,79 @@ def register_user(user_data):
     user_data['_id'] = str(insert_result.inserted_id)
 
     return user_data, 200
+
+# user_logic.py
+
+def set_user_data(user_id, profile_data):
+    collection = db.users
+
+    # Fields that can be updated
+    update_fields = {
+        "firstName": profile_data.get("firstName", ""),
+        "lastName": profile_data.get("lastName", ""),
+        "country": profile_data.get("country", ""),
+        "phoneNumber": profile_data.get("phoneNumber", ""),
+        "location": profile_data.get("location", ""),
+        "birthday": {
+            "day": profile_data.get("birthday", {}).get("day", ""),
+            "month": profile_data.get("birthday", {}).get("month", "")
+        }
+    }
+
+    # Update the user document with the provided fields
+    result = collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": update_fields}
+    )
+
+    if result.matched_count == 0:
+        return {"error": "User not found"}, 404
+
+    return {"message": "Profile data updated successfully"}, 200
+
+def get_user_data(user_id):
+    collection = db.users
+    result = collection.find_one({"_id": ObjectId(user_id)})
+
+    if result is None:
+        return {"error": "User not found"}, 404
+
+    # Convert ObjectId to string for JSON serialization
+    result['_id'] = str(result['_id'])
+    return result, 200
+
+# user_logic.py
+
+def update_user_data(user_id, updated_data):
+    collection = db.users
+
+    # Validate if email or username are being updated, ensuring they remain unique
+    if "Email" in updated_data:
+        email_filter = {"Email": updated_data["Email"], "_id": {"$ne": ObjectId(user_id)}}
+        if collection.find_one(email_filter):
+            return {"error": "Email already in use"}, 400
+
+    if "Username" in updated_data:
+        username_filter = {"Username": updated_data["Username"], "_id": {"$ne": ObjectId(user_id)}}
+        if collection.find_one(username_filter):
+            return {"error": "Username already in use"}, 400
+
+    # Update the user document with provided fields
+    result = collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": updated_data}
+    )
+
+    if result.matched_count == 0:
+        return {"error": "User not found"}, 404
+
+    return {"message": "User data updated successfully"}, 200
+
+def delete_user(user_id):
+    collection = db.users
+    result = collection.delete_one({"_id": ObjectId(user_id)})
+
+    if result.deleted_count == 0:
+        return {"error": "User not found"}, 404
+
+    return {"message": "User account deleted successfully"}, 200
