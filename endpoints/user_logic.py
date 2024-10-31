@@ -45,14 +45,14 @@ def set_user_data(user_id, profile_data):
 
     # Fields that can be updated
     update_fields = {
-        "firstName": profile_data.get("firstName", ""),
-        "lastName": profile_data.get("lastName", ""),
-        "country": profile_data.get("country", ""),
-        "phoneNumber": profile_data.get("phoneNumber", ""),
-        "location": profile_data.get("location", ""),
-        "birthday": {
-            "day": profile_data.get("birthday", {}).get("day", ""),
-            "month": profile_data.get("birthday", {}).get("month", "")
+        "FirstName": profile_data.get("FirstName", ""),
+        "LastName": profile_data.get("LastName", ""),
+        "Country": profile_data.get("Country", ""),
+        "PhoneNumber": profile_data.get("PhoneNumber", ""),
+        "Location": profile_data.get("Location", ""),
+        "Birthday": {
+            "Day": profile_data.get("Birthday", {}).get("Day", ""),
+            "Month": profile_data.get("Birthday", {}).get("Month", "")
         }
     }
 
@@ -73,6 +73,14 @@ def get_user_data(user_id):
 
     if result is None:
         return {"error": "User not found"}, 404
+
+    # Set default values for any missing fields
+    result.setdefault("FirstName", "")
+    result.setdefault("LastName", "")
+    result.setdefault("Country", "")
+    result.setdefault("PhoneNumber", "")
+    result.setdefault("Location", "")
+    result.setdefault("Birthday", {"Day": "", "Month": ""})  # Ensure birthday has default structure
 
     # Convert ObjectId to string for JSON serialization
     result['_id'] = str(result['_id'])
