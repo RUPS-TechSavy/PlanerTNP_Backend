@@ -1,10 +1,11 @@
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+import os
 
 class DB:
     def __init__(self):
         # MongoDB connection
-        connection_uri = "mongodb+srv://username:password@cluster0.wertr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+        connection_uri = os.getenv('DATABASE_URL')
         client = MongoClient(connection_uri, server_api=ServerApi('1'))
         self.db = client.dsml
 

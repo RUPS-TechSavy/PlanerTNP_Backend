@@ -1,0 +1,9 @@
+services:
+  backend:
+    image: planer_tnp_backend_image:latest
+    build: .
+    env_file:
+      - .env  # Load environment variables from .env file
+    container_name: planer_tnp_backend  # Set custom container name
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"  # Map host port to container port using APP_PORT
