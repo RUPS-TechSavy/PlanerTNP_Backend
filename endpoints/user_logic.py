@@ -1,15 +1,17 @@
-from db import db
 from bson.objectid import ObjectId
+
+from db import db
 
 
 def login_user(user_data):
     collection = db.users
     filter = {"Email": user_data["Email"], "Password": user_data["Password"]}
     result = collection.find_one(filter)
-
     if result is None:
         return {"error": "Invalid username or password"}, 400
-
+    
+    result["tasks"] = []
+    result['id'] = str(result.get('id'))
     result['_id'] = str(result['_id'])
     return result, 200
 

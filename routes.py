@@ -1,16 +1,19 @@
 # routes/auth_routes.py
 from urllib.parse import unquote
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
-from endpoints.task_logic import set_task, get_all_tasks, delete_task
-from endpoints.user_logic import login_user, register_user, set_user_data, get_user_data, update_user_data, delete_user
 from endpoints.schedule_processor import process_csv_to_db
-from endpoints.schedule_retriever import retrieve_all_subjects, retrieve_schedule
+from endpoints.schedule_retriever import (retrieve_all_subjects,
+                                          retrieve_schedule)
+from endpoints.task_logic import delete_task, get_all_tasks, set_task
+from endpoints.user_logic import (delete_user, get_user_data, login_user,
+                                  register_user, set_user_data,
+                                  update_user_data)
 
 auth_bp = Blueprint('auth', __name__)
 schedule_bp = Blueprint('schedule', __name__)
-task_bp = Blueprint('tasks', __name__)
+task_bp = Blueprint('task', __name__)
 
 
 @auth_bp.route('/login', methods=['POST'])
