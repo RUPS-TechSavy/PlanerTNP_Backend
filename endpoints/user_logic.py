@@ -83,9 +83,13 @@ def get_user_data(user_id):
     result.setdefault("PhoneNumber", "")
     result.setdefault("Location", "")
     result.setdefault("Birthday", {"Day": "", "Month": ""})  # Ensure birthday has default structure
+    
+    for task in result.get("tasks", []):
+        task["_id"] = str(task["_id"])
 
     # Convert ObjectId to string for JSON serialization
     result['_id'] = str(result['_id'])
+    print(result)
     return result, 200
 
 # user_logic.py
