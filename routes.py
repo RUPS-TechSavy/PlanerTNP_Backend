@@ -9,11 +9,16 @@ from endpoints.schedule_retriever import (retrieve_all_subjects,
 from endpoints.task_logic import delete_task, get_all_tasks, set_task
 from endpoints.user_logic import (delete_user, get_user_data, login_user,
                                   register_user, set_user_data,
-                                  update_user_data, update_user_legend)
+                                  update_user_data, update_user_legend, get_user_by_email)
+
+from endpoints.group_logic import get_all_groups, create_group, update_group, delete_group, get_user_owned_groups, get_user_member_groups, user_can_edit_group
+
+
 
 auth_bp = Blueprint('auth', __name__)
 schedule_bp = Blueprint('schedule', __name__)
 task_bp = Blueprint('task', __name__)
+group_bp = Blueprint('group', __name__)
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -63,6 +68,11 @@ def update_legend(user_id):
 def update_profile(user_id):
     updated_data = request.json
     result, status_code = update_user_data(user_id, updated_data)
+    return jsonify(result), status_code
+
+@auth_bp.route('/user/<email>/user-email', methods=['GET'])
+def get_profile_by_email(email):
+    result, status_code = get_user_by_email(email)
     return jsonify(result), status_code
 
 
@@ -130,3 +140,41 @@ def retrieve_tasks(user_id):
 def remove_task(user_id, task_id):
     result, status_code = delete_task(user_id, task_id)
     return jsonify(result), status_code
+
+@group_bp.route('/', methods=['GET'])
+def retrieve_groups():
+    groups = get_all_groups()
+    return jsonify(groups), 200
+
+@group_bp.route('/', methods=['POST'])
+def add_group():
+    group_data = request.json
+    result, status_code = create_group(group_data)
+    return jsonify(result), status_code
+
+@group_bp.route('/<group_id>', methods=['PUT'])
+def modify_group(group_id):
+    updates = request.json
+    print(updates)
+    result, status_code = update_group(group_id, updates)
+    return jsonify(result), status_code
+
+@group_bp.route('/<group_id>', methods=['DELETE'])
+def remove_group(group_id):
+    result, status_code = delete_group(group_id)
+    return jsonify(result), status_code
+
+@group_bp.route('/<user_id>/owned-groups', methods=['GET'])
+def retrieve_user_owned_groups(user_id):
+    groups = get_user_owned_groups(user_id)
+    return jsonify(groups), 200
+
+@group_bp.route('/<user_id>/member-groups', methods=['GET'])
+def retrieve_user_member_groups(user_id):
+    groups = get_user_member_groups(user_id)
+    return jsonify(groups), 200
+
+@group_bp.route('/user/<user_id>/groups/<group_id>/can-edit', methods=['GET'])
+def check_edit_permission(user_id, group_id):
+    can_edit = user_can_edit_group(user_id, group_id)
+    return jsonify({"can_edit": can_edit}), 200

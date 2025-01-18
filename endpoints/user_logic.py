@@ -172,3 +172,23 @@ def delete_user(user_id):
         return {"error": "User not found"}, 404
 
     return {"message": "User account deleted successfully"}, 200
+
+def get_user_by_email(email):
+    collection = db.users
+    result = collection.find_one({"Email": email})
+    if result is None:
+        return {"error": "User not found"}, 404
+    
+    result.setdefault("FirstName", "")
+    result.setdefault("LastName", "")
+    result.setdefault("Country", "")
+    result.setdefault("PhoneNumber", "")
+    result.setdefault("Location", "")
+    result.setdefault("Birthday", {"Day": "", "Month": ""})
+    
+    for task in result.get("tasks", []):
+        task["_id"] = str(task["_id"])
+
+    result['_id'] = str(result['_id'])
+    print(result)
+    return result, 200
