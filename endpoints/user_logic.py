@@ -13,6 +13,8 @@ def login_user(user_data):
     result["tasks"] = []
     result['id'] = str(result.get('id'))
     result['_id'] = str(result['_id'])
+    # Izpiši vse podatke o uporabniku v konzoli
+    print("User logged in:", result)
     return result, 200
 
 
@@ -34,11 +36,20 @@ def register_user(user_data):
     if username_result is not None:
         return {"error": "Username already exists"}, 400
 
+    # Dodaj privzeto "legend" polje z barvami in praznimi vrednostmi
+    legend_colors = [
+        "green1", "green2", "blue", "purple", "yellow",
+        "orange", "red", "black", "silver", "gray"
+    ]
+    user_data["legend"] = {color: "" for color in legend_colors}  # Inicializacija legend z barvami
 
     insert_result = collection.insert_one(user_data)
     user_data['_id'] = str(insert_result.inserted_id)
 
     return user_data, 200
+
+
+
 
 # user_logic.py
 
@@ -94,8 +105,42 @@ def get_user_data(user_id):
 
 # user_logic.py
 
+def update_user_legend(user_id, legend_data):
+    collection = db.users
+    try:
+        # Posodobi samo polje "legend" za določenega uporabnika
+        update_result = collection.update_one(
+            {"_id": ObjectId(user_id)},  # Preveri uporabnikov ID
+            {"$set": {"legend": legend_data}}  # Posodobi polje "legend"
+        )
+
+        if update_result.matched_count == 0:
+            return {"error": "User not found"}, 404
+
+        if update_result.modified_count == 0:
+            return {"message": "Legend not modified, possibly identical"}, 200
+
+        return {"message": "Legend updated successfully"}, 200
+
+    except Exception as e:
+        return {"error": str(e)}, 404
+
+
 def update_user_data(user_id, updated_data):
     collection = db.users
+
+    # Preveri, ali želimo posodobiti samo "Legend"
+    if "legend" in updated_data and len(updated_data) == 1:
+        # Posodobi samo polje "Legend"
+        result = collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"legend": updated_data["legend"]}}
+        )
+
+        if result.matched_count == 0:
+            return {"error": "User not found"}, 404
+
+        return {"message": "Legend updated successfully"}, 200
 
     # Validate if email or username are being updated, ensuring they remain unique
     if "Email" in updated_data:

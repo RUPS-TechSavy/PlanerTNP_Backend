@@ -9,7 +9,7 @@ from endpoints.schedule_retriever import (retrieve_all_subjects,
 from endpoints.task_logic import delete_task, get_all_tasks, set_task
 from endpoints.user_logic import (delete_user, get_user_data, login_user,
                                   register_user, set_user_data,
-                                  update_user_data)
+                                  update_user_data, update_user_legend)
 
 auth_bp = Blueprint('auth', __name__)
 schedule_bp = Blueprint('schedule', __name__)
@@ -47,6 +47,16 @@ def get_profile(user_id):
 def delete_profile(user_id):
     result, status_code = delete_user(user_id)
     return jsonify(result), status_code
+
+@auth_bp.route('/user/<user_id>/update-legend', methods=['PUT'])
+def update_legend(user_id):
+    legend_data = request.json.get("legend")  # Extract the "legend" key from the payload
+    if not legend_data:
+        return jsonify({"error": "Legend data missing"}), 400
+
+    result, status_code = update_user_legend(user_id, legend_data)
+    return jsonify(result), status_code
+
 
 
 @auth_bp.route('/user/<user_id>/update-data', methods=['PUT'])
