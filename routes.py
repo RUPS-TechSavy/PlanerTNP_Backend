@@ -1,12 +1,12 @@
 # routes/auth_routes.py
 from urllib.parse import unquote
-
+from flask_cors import cross_origin
 from flask import Blueprint, jsonify, request
 
 from endpoints.schedule_processor import process_csv_to_db
 from endpoints.schedule_retriever import (retrieve_all_subjects,
                                           retrieve_schedule, fetch_all_schedules_transformed)
-from endpoints.task_logic import delete_task, get_all_tasks, set_task
+from endpoints.task_logic import delete_task, get_all_tasks, set_task, update_task
 from endpoints.user_logic import (delete_user, get_user_data, login_user,
                                   register_user, set_user_data,
                                   update_user_data)
@@ -120,3 +120,13 @@ def retrieve_tasks(user_id):
 def remove_task(user_id, task_id):
     result, status_code = delete_task(user_id, task_id)
     return jsonify(result), status_code
+    
+# Get the data for updating the task
+# Remove cross_origin for this route since it's already handled globally
+@task_bp.route('/user/<user_id>/tasks/<task_id>', methods=['PUT'])
+def update_task_route(user_id, task_id):
+    task_data = request.json  # Get the data for updating the task
+    result, status_code = update_task(user_id, task_id, task_data)
+    return jsonify(result), status_code
+
+

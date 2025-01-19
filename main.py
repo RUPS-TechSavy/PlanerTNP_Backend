@@ -1,13 +1,13 @@
 import os
-
 from flask import Flask
 from flask_cors import CORS
 
 from routes import auth_bp, schedule_bp, task_bp
 
 app = Flask(__name__)
-CORS(app)
 
+# Explicitly allow localhost:1234 with specific methods and headers
+CORS(app, origins="http://localhost:1234", methods=["GET", "POST", "PUT", "DELETE"], supports_credentials=True)
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(schedule_bp, url_prefix='/schedule')

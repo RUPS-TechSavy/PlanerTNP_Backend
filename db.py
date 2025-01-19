@@ -7,7 +7,7 @@ from pymongo.server_api import ServerApi
 class DB:
     def __init__(self):
         # MongoDB connection
-        connection_uri = "mongodb+srv://rene:CJW79XEHTXIWD9dp@planertnp.hul1s.mongodb.net/?retryWrites=true&w=majority&appName=planerTNP"
+        connection_uri = "mongodb+srv://haracicervin:G8wWnGS6zos139B9@cluster0.x7x9i.mongodb.net/?retryWrites=true&w=majority&appName=planerTNP"
         #connection_uri = os.getenv('DATABASE_URL')
         client = MongoClient(connection_uri, server_api=ServerApi('1'))
         self.db = client.dsml
