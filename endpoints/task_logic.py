@@ -4,47 +4,92 @@ from db import db
 
 
 def set_task(user_id, task_data):
-    collection = db.users
-    task_data["_id"] = ObjectId()  # Assign a unique ID to each task
+    collection = db.tasks
+    task_data["_id"] = ObjectId()  
+    task_data["creator"] = ObjectId(user_id)
 
-    result = collection.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$push": {"tasks": task_data}}
-    )
+    result = collection.insert_one(task_data)
 
-    if result.matched_count == 0:
-        return {"error": "User not found"}, 404
+    if result.inserted_id:
+        task_data["_id"] = str(result.inserted_id)
+        for i in range(len(task_data["groups"])):
+            task_data["groups"][i] = str(task_data["groups"][i])
+        
+        task_data["creator"] = str(task_data["creator"])
+        return {"message": "Task added successfully", "task": task_data}, 200
 
-    task_data["_id"] = str(task_data["_id"])  # Convert task ID to string for JSON response
-    return {"message": "Task added successfully", "task": task_data}, 200
+    return {"error": "Failed to add task"}, 500
 
+def get_public_tasks():
+    collection = db.tasks
+    tasks = collection.find({"public": True})
 
-def get_all_tasks(user_id):
-    collection = db.users
-    user = collection.find_one({"_id": ObjectId(user_id)}, {"tasks": 1})
-
-    if user is None:
-        return {"error": "User not found"}, 404
-
-    tasks = user.get("tasks", [])
-    # Convert task IDs to strings for JSON serialization
+    tasks_list = []
     for task in tasks:
         task["_id"] = str(task["_id"])
+        task["creator"] = str(task["creator"])
 
-    return {"tasks": tasks}, 200
+        for i in range(len(task.get("groups", []))):
+            task["groups"][i] = str(task["groups"][i])
+
+        tasks_list.append(task)
+
+    return {"tasks": tasks_list}, 200
 
 
-# user_logic.py
+def get_all_tasks(user_id, user_email):
+    user_groups = db.groups.find({"members.email": user_email})
+    group_ids = [str(group["_id"]) for group in user_groups]
+
+    collection = db.tasks
+    tasks = collection.find({
+        "$or": [
+            {"creator": ObjectId(user_id)},
+            {"groups": {"$in": group_ids}},
+            {"public": True}
+        ]
+    })
+
+    tasks_list = []
+    for task in tasks:
+        task["_id"] = str(task["_id"])
+        task["creator"] = str(task["creator"])
+
+        for i in range(len(task.get("groups", []))):
+            task["groups"][i] = str(task["groups"][i])
+
+        tasks_list.append(task)
+
+    return {"tasks": tasks_list}, 200
 
 def delete_task(user_id, task_id):
-    collection = db.users
+    collection = db.tasks
 
+    result = collection.delete_one(
+        {"_id": ObjectId(task_id), "creator": ObjectId(user_id)}
+    )
+
+    if result.deleted_count == 0:
+        return {"error": "Task not found or user not authorized to delete it"}, 404
+
+    return {"message": "Task deleted successfully"}, 200
+
+def update_task(task_id, updates):
+    collection = db.tasks
+
+    # Ensure task ID is in proper format
+    task_id = ObjectId(task_id)
+
+    # Remove _id from updates if it exists
+    updates.pop("_id", None)
+
+    # Update the task document with the provided fields
     result = collection.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$pull": {"tasks": {"_id": ObjectId(task_id)}}}
+        {"_id": task_id},
+        {"$set": updates}
     )
 
     if result.matched_count == 0:
-        return {"error": "User or task not found"}, 404
+        return {"error": "Task not found"}, 404
 
-    return {"message": "Task deleted successfully"}, 200
+    return {"message": "Task updated successfully"}, 200
