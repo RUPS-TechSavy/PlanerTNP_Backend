@@ -73,3 +73,23 @@ def delete_task(user_id, task_id):
         return {"error": "Task not found or user not authorized to delete it"}, 404
 
     return {"message": "Task deleted successfully"}, 200
+
+def update_task(task_id, updates):
+    collection = db.tasks
+
+    # Ensure task ID is in proper format
+    task_id = ObjectId(task_id)
+
+    # Remove _id from updates if it exists
+    updates.pop("_id", None)
+
+    # Update the task document with the provided fields
+    result = collection.update_one(
+        {"_id": task_id},
+        {"$set": updates}
+    )
+
+    if result.matched_count == 0:
+        return {"error": "Task not found"}, 404
+
+    return {"message": "Task updated successfully"}, 200
