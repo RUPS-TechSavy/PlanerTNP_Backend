@@ -2,6 +2,69 @@ from bson import ObjectId
 from datetime import datetime
 from db import db
 
+# Scheduler and email sender
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
+import pytz
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+def get_user_email(user_id):
+    user_collection = db.users
+    user_doc = user_collection.find_one({"_id": ObjectId(user_id)})
+    if user_doc:
+        return user_doc['Email']
+    else:
+        return None  
+
+# Reminder function
+def send_reminder(task_name, user_id, reminder_time):
+    smtp_server = "smtp-relay.brevo.com"
+    smtp_port = 587
+    smtp_login = ""
+    smtp_password = ""
+    sender_email = "rups4224@gmail.com"
+
+    user_email = get_user_email(user_id)
+    subject = f"Reminder: {task_name}"
+    body = f"Hi,\n\nThis is a reminder for your task '{task_name}' will start in 15 minutes.\n\nBest Regards"
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = user_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain"))
+    print(user_email, flush=True)
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_login, smtp_password)
+            server.sendmail(sender_email, user_email, message.as_string())
+        print("Email sent successfully!", flush=True)
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+def schedule_task_reminders(task, user_id, timezone_str='Europe/Ljubljana'):
+
+    start_time_naive = datetime.strptime(task['startDateTime'], '%Y-%m-%dT%H:%M')
+    
+    # Calculate the reminder time to be 15 minutes before the task start time
+    reminder_time = start_time_naive - timedelta(minutes=15) - timedelta(hours=1)
+    
+
+    user_email = get_user_email(user_id)
+    print("Scheduling reminder for task:", task['name'], "at", reminder_time, user_email, flush=True)
+        
+        # Schedule the reminder
+    scheduler.add_job(send_reminder, 'date', run_date=reminder_time, args=[task['name'], user_id, reminder_time.strftime('%Y-%m-%d %H:%M:%S')])
+
+
 
 def set_task(user_id, task_data):
     collection = db.tasks
@@ -16,6 +79,7 @@ def set_task(user_id, task_data):
             task_data["groups"][i] = str(task_data["groups"][i])
         
         task_data["creator"] = str(task_data["creator"])
+        schedule_task_reminders(task_data, user_id)
         return {"message": "Task added successfully", "task": task_data}, 200
 
     return {"error": "Failed to add task"}, 500
