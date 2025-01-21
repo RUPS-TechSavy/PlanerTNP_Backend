@@ -4,3 +4,5 @@ flask_cors
 numpy
 APScheduler
 pytz
+python-dotenv
+flask_talisman

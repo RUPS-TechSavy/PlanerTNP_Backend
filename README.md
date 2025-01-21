@@ -19,6 +19,8 @@ Create a .env file in the root of the backend project and fill in the variables 
 ```
 BACKEND_PORT=1234
 DATABASE_URL=mongodb+srv://<username>:<password>@<cluster>.hul1s.mongodb.net/
+EMAIL_USER=example@smtp-brevo.com
+EMAIL_PASSWORD=password
 ```
 
 Run `./setup_docker.sh` script.

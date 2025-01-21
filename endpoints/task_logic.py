@@ -1,14 +1,16 @@
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timedelta
 from db import db
+import os
+from dotenv import load_dotenv
 
 # Scheduler and email sender
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
-import pytz
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+load_dotenv()
 
 
 scheduler = BackgroundScheduler()
@@ -26,20 +28,19 @@ def get_user_email(user_id):
 def send_reminder(task_name, user_id, reminder_time):
     smtp_server = "smtp-relay.brevo.com"
     smtp_port = 587
-    smtp_login = ""
-    smtp_password = ""
-    sender_email = "rups4224@gmail.com"
+    smtp_login = os.getenv('EMAIL_USER')
+    smtp_password = os.getenv('EMAIL_PASSWORD')
+    sender_email = "PlanWise@gmail.com"
 
     user_email = get_user_email(user_id)
     subject = f"Reminder: {task_name}"
-    body = f"Hi,\n\nThis is a reminder for your task '{task_name}' will start in 15 minutes.\n\nBest Regards"
+    body = f"Hi,\n\nThis is a reminder your task '{task_name}' will start in 15 minutes.\n\nBest Regards"
 
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = user_email
     message["Subject"] = subject
     message.attach(MIMEText(body, "plain"))
-    print(user_email, flush=True)
 
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -61,7 +62,7 @@ def schedule_task_reminders(task, user_id, timezone_str='Europe/Ljubljana'):
     user_email = get_user_email(user_id)
     print("Scheduling reminder for task:", task['name'], "at", reminder_time, user_email, flush=True)
         
-        # Schedule the reminder
+    # Schedule the reminder
     scheduler.add_job(send_reminder, 'date', run_date=reminder_time, args=[task['name'], user_id, reminder_time.strftime('%Y-%m-%d %H:%M:%S')])
 
 
